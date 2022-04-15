@@ -62,6 +62,25 @@ const background = {
     }
 };
 
+const getReady = {
+    spriteX : 134,
+    spriteY : 0,
+    width : 174,
+    heigth : 152,
+    x : canvas.width / 2 - 174 / 2,
+    y : 58,
+    draw() {
+
+        context.drawImage(
+            sprites, 
+            getReady.spriteX, getReady.spriteY,
+            getReady.width, getReady.heigth,
+            getReady.x, getReady.y,
+            getReady.width, getReady.heigth,
+        );
+    }
+};
+
 const flappyBird = {
     spriteX : 0,
     spriteY : 0,
@@ -88,17 +107,67 @@ const flappyBird = {
     }
 };
 
+
+let activeScreen = {};
+
+function changeScreen(newScreen){
+    activeScreen = newScreen
+};
+
+
+const screens = {
+    start : {
+        draw() {
+            background.draw();
+
+            floor.draw();
+
+            getReady.draw();
+
+            flappyBird.draw();
+        },
+
+        click(){
+            changeScreen(screens.game)
+        },
+
+        update() {
+
+        }
+    },
+
+    game : {
+        draw(){
+            background.draw();
+
+            floor.draw();
+        
+            flappyBird.draw();
+        },
+
+        update() {
+            flappyBird.update();
+        }
+    },
+};
+
 function app(){
-    flappyBird.update()
 
-    background.draw()
+    activeScreen.draw();
+    activeScreen.update();
 
-    floor.draw()
+    requestAnimationFrame(app);
+};
 
-    flappyBird.draw()
+window.addEventListener('click', function() {
+    if(activeScreen.click){
+        activeScreen.click()
+    }
+});
 
-    requestAnimationFrame(app)
-}
 
+
+
+changeScreen(screens.start);
 app();
   
