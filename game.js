@@ -1,40 +1,17 @@
-console.log('Flappy Bird')
+console.log('Flappy Bird');
 
 const sprites = new Image();
 sprites.src = './sprites.png';
 
+const soundHIT = new Audio();
+soundHIT.src= './soundEfects/hit.wav';
+
 const canvas = document.querySelector('canvas');
 const context = canvas.getContext('2d');
 
-const soundHIT = new Audio();
-soundHIT.src= './soundEfects/hit.wav'
-
-
-const floor = {
-    spriteX : 0,
-    spriteY : 610,
-    width : 224,
-    heigth : 112,
-    x : 0,
-    y : canvas.height - 112,
-    draw() {
-        context.drawImage(
-            sprites, 
-            floor.spriteX, floor.spriteY,
-            floor.width, floor.heigth,
-            floor.x, floor.y,
-            floor.width, floor.heigth,
-        );
-
-        context.drawImage(
-            sprites, 
-            floor.spriteX, floor.spriteY,
-            floor.width, floor.heigth,
-            floor.x + floor.width, floor.y,
-            floor.width, floor.heigth,
-        );
-    }
-};
+const globais = {};
+let activeScreen = {};
+let frames = 0;
 
 const background = {
     spriteX : 390,
@@ -84,9 +61,94 @@ const getReady = {
     }
 };
 
+const screens = {
+    start : {
+        incialize() {
+            globais.flappyBird = createFlappyBird();
+            globais.floor = createFloor();
+        },
+
+        draw() {
+            background.draw();
+
+            globais.floor.draw();
+
+            getReady.draw();
+
+            globais.flappyBird.draw();
+        },
+
+        click(){
+            changeScreen(screens.game)
+        },
+
+        update() {
+            globais.floor.update();
+        }
+    },
+
+    game : {
+        draw(){
+            background.draw();
+
+            globais.floor.draw();
+        
+            globais.flappyBird.draw();
+        },
+
+        click(){
+            globais.flappyBird.toUp();
+        },
+
+        update() {
+            globais.flappyBird.update();
+            globais.floor.update();
+        }
+    },
+};
+
+function createFloor(){
+    const floor = {
+        spriteX : 0,
+        spriteY : 610,
+        width : 224,
+        heigth : 112,
+        x : 0,
+        y : canvas.height - 112,
+    
+        update(){
+            const floorMoviment = 1;
+            const reloadIn = floor.width / 2;
+            const moviment = floor.x - floorMoviment
+
+            floor.x = moviment % reloadIn;
+        },
+    
+        draw() {
+            context.drawImage(
+                sprites, 
+                floor.spriteX, floor.spriteY,
+                floor.width, floor.heigth,
+                floor.x, floor.y,
+                floor.width, floor.heigth,
+            );
+    
+            context.drawImage(
+                sprites, 
+                floor.spriteX, floor.spriteY,
+                floor.width, floor.heigth,
+                floor.x + floor.width, floor.y,
+                floor.width, floor.heigth,
+            );
+        }
+    };
+    
+    return floor
+}
+
 function touchInTheFloor() {
     const flappyBirdY = globais.flappyBird.y + globais.flappyBird.heigth;
-    const floorY = floor.y
+    const floorY = globais.floor.y
 
     if(flappyBirdY >= floorY){
         return true;
@@ -106,13 +168,32 @@ function createFlappyBird() {
         gravity : 0.20,
         velocity : 0,
         jump : 5,
-    
+        activeFrame: 0,
+        moviments :[
+            {spriteX: 0, spriteY: 0},
+            {spriteX: 0, spriteY: 26},
+            {spriteX: 0, spriteY: 52},
+        ],
+        
+        updateFrame(){
+            const framesInterval = 8;
+            const exceededFramesInterval = frames % framesInterval === 0;
+
+            if(exceededFramesInterval){
+                const incrementBase = 1 ;
+                const increment = incrementBase + flappyBird.activeFrame;
+                const reloadIn = flappyBird.moviments.length;
+                flappyBird.activeFrame = increment % reloadIn;
+            } 
+           
+        },
+
         toUp(){
             flappyBird.velocity = - flappyBird.jump;
         },
     
         update() {
-            if(touchInTheFloor(flappyBird, floor)){
+            if(touchInTheFloor(flappyBird, globais.floor)){
                 soundHIT.play();
 
                 setTimeout(() => {
@@ -127,9 +208,12 @@ function createFlappyBird() {
         },
     
         draw() {
+            flappyBird.updateFrame()
+            const { spriteX, spriteY } = flappyBird.moviments[flappyBird.activeFrame];
+
             context.drawImage(
                 sprites, 
-                flappyBird.spriteX, flappyBird.spriteY,
+                spriteX, spriteY,
                 flappyBird.width, flappyBird.heigth,
                 flappyBird.x, flappyBird.y,
                 flappyBird.width, flappyBird.heigth,
@@ -138,12 +222,7 @@ function createFlappyBird() {
     };
 
     return flappyBird;
-}
-
-
- const globais = {};
-
-let activeScreen = {};
+};
 
 function changeScreen(newScreen){
     activeScreen = newScreen
@@ -154,55 +233,13 @@ function changeScreen(newScreen){
 };
 
 
-const screens = {
-    start : {
-        incialize() {
-            globais.flappyBird = createFlappyBird();
-        },
-
-        draw() {
-            background.draw();
-
-            floor.draw();
-
-            getReady.draw();
-
-            globais.flappyBird.draw();
-        },
-
-        click(){
-            changeScreen(screens.game)
-        },
-
-        update() {
-
-        }
-    },
-
-    game : {
-        draw(){
-            background.draw();
-
-            floor.draw();
-        
-            globais.flappyBird.draw();
-        },
-
-        click(){
-            globais.flappyBird.toUp();
-        },
-
-        update() {
-            globais.flappyBird.update();
-        }
-    },
-};
 
 function app(){
 
     activeScreen.draw();
     activeScreen.update();
 
+    frames = frames + 1;
     requestAnimationFrame(app);
 };
 
@@ -211,8 +248,6 @@ window.addEventListener('click', function() {
         activeScreen.click()
     }
 });
-
-
 
 
 changeScreen(screens.start);
